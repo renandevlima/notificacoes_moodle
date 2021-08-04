@@ -22,21 +22,33 @@
  */
 
 require_once(__DIR__ . "/../../config.php");
+require_once($CFG->dirroot . '/local/message/classes/form/edit.php');
 
 global $DB;
 
 $PAGE->set_url(new moodle_url('/local/message/manage.php'));
 $PAGE->set_context(\context_system::instance());
-$PAGE->set_title("Administrar Mensagens");
+$PAGE->set_title("Edit");
 
-$messages = $DB->get_records('local_message');
+//Aqui mostraremos um formulário
+
+$mform = new edit();
+
+//Form processing and displaying is done here
+if ($mform->is_cancelled()) {
+    //Retorna para página de administração
+    redirect($CFG->wwwroot . '/local/message/manage.php', 'Você cancelou a mensagem no formulario.');
+} else if ($fromform = $mform->get_data()) {
+    //Adiciona os dados no banco de dados.
+    $recordtoinsert = new stdClass();
+    $recordtoinsert->messagetext = $fromform->messagetext;
+    $recordtoinsert->messagetype = $fromform->messagetype;
+
+    $DB->insert_record('local_message', $recordtoinsert);
+    redirect($CFG->wwwroot . '/local/message/manage.php', 'Você criou a mensagem: ' . $fromform->messagetext);
+}
+
 
 echo $OUTPUT->header();
-
-$templatecontext = (object)[
-    'messages' => array_values($messages),
-    'editurl' => new moodle_url("/local/message/edit.php")
-];
-
-echo $OUTPUT->render_from_template('local_message/manage', $templatecontext);
+$mform->display();
 echo $OUTPUT->footer();
